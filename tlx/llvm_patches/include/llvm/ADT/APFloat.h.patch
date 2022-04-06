@@ -1,0 +1,25 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/ADT/APFloat.h	2021-11-19 17:32:34.170692372 -0600
++++ ./include/llvm/ADT/APFloat.h	2021-11-19 17:27:49.720862331 -0600
+@@ -156,7 +156,8 @@
+     S_IEEEdouble,
+     S_x87DoubleExtended,
+     S_IEEEquad,
+-    S_PPCDoubleDouble
++    S_PPCDoubleDouble,
++    S_CustomFP
+   };
+ 
+   static const llvm::fltSemantics &EnumToSemantics(Semantics S);
+@@ -169,6 +170,7 @@
+   static const fltSemantics &IEEEquad() LLVM_READNONE;
+   static const fltSemantics &PPCDoubleDouble() LLVM_READNONE;
+   static const fltSemantics &x87DoubleExtended() LLVM_READNONE;
++  static const fltSemantics &CustomFP() LLVM_READNONE;
+ 
+   /// A Pseudo fltsemantic used to construct APFloats that cannot conflict with
+   /// anything real.
+@@ -1344,3 +1346,4 @@
+ 
+ #undef APFLOAT_DISPATCH_ON_SEMANTICS
+ #endif // LLVM_ADT_APFLOAT_H
++

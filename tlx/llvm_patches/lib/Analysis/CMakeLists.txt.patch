@@ -1,0 +1,10 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Analysis/CMakeLists.txt	2021-11-19 17:32:37.794995976 -0600
++++ ./lib/Analysis/CMakeLists.txt	2021-11-19 17:27:38.465919401 -0600
+@@ -137,6 +137,7 @@
+   TFUtils.cpp
+   TargetLibraryInfo.cpp
+   TargetTransformInfo.cpp
++  TensorProperties.cpp
+   Trace.cpp
+   TypeBasedAliasAnalysis.cpp
+   TypeMetadataUtils.cpp

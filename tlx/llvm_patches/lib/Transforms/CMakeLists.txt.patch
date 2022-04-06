@@ -1,0 +1,7 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Transforms/CMakeLists.txt	2021-11-19 17:32:46.071689308 -0600
++++ ./lib/Transforms/CMakeLists.txt	2021-11-19 17:27:38.476920322 -0600
+@@ -9,3 +9,4 @@
+ add_subdirectory(ObjCARC)
+ add_subdirectory(Coroutines)
+ add_subdirectory(CFGuard)
++add_subdirectory(Tensor)

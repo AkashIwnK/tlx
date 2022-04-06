@@ -1,0 +1,131 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Intrinsics.td	2021-11-19 17:32:36.063850960 -0600
++++ ./include/llvm/IR/Intrinsics.td	2021-11-19 17:27:49.724862666 -0600
+@@ -1763,6 +1763,128 @@
+ 
+ //===----------------------------------------------------------------------===//
+ 
++//===---------- Intrinsics to represent tensor operations -----------------===//
++
++
++def int_tensor_typeinfo : Intrinsic<[llvm_token_ty], [llvm_any_ty, llvm_anyvector_ty,
++                                           llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty],
++                                          [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_relu : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_tanh : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_sigmoid : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_sin : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_cos : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_exp : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_exp2 : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_log : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_log2 : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_log10 : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_sqrt : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_fabs : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_floor : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_ceil : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_matmul : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_broadcast : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, LLVMVectorElementType<0>],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_transpose : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_max : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_min : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_add : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_mul : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_and : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_or : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_reduce_xor : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_anyvector_ty,
++                                        llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++def int_tensor_pad : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_any_ty,
++                                        llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty],
++                                        [IntrNoMem, IntrSpeculatable]>;
++
++
++//===---------- Intrinsics to represent tensor memory operations -----------------===//
++
++def int_tensor_load : Intrinsic<[llvm_token_ty], [llvm_any_ty, llvm_anyvector_ty, llvm_anyvector_ty,
++                                                 llvm_anyvector_ty, llvm_anyvector_ty],
++                                                 [IntrSpeculatable, IntrReadMem, ReadOnly<ArgIndex<0>>]>;
++
++
++def int_tensor_store : Intrinsic<[], [llvm_any_ty, llvm_anyvector_ty, llvm_token_ty],
++                                                [IntrWriteMem, WriteOnly<ArgIndex<0>>]>;
++
++
++//===---------- Intrinsics to represent 2D tensor operations -----------------===//
++
++def int_tensor_mma : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
++                                                                  [IntrSpeculatable, IntrNoMem]>;
++
++
++//===---------- Intrinsics to represent vector operations -----------------===//
++
++def int_vector_splat : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, LLVMVectorElementType<0>],
++                                                            [IntrNoMem, IntrSpeculatable]>;
++
++def int_vector_reduce_mac_acc : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty,
++                                                            llvm_anyvector_ty, llvm_anyint_ty],
++                                                            [IntrNoMem, IntrSpeculatable]>;
++
++def int_vector_reduce_mac : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty,
++                                                            llvm_anyint_ty],
++                                                            [IntrNoMem, IntrSpeculatable]>;
++
++
+ //===----------------------------------------------------------------------===//
+ // Target-specific intrinsics
+ //===----------------------------------------------------------------------===//

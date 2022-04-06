@@ -1,0 +1,25 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Support/APFloat.cpp	2021-11-19 17:32:40.592230298 -0600
++++ ./lib/Support/APFloat.cpp	2021-11-19 17:27:49.732863336 -0600
+@@ -81,6 +81,7 @@
+   static const fltSemantics semIEEEdouble = {1023, -1022, 53, 64};
+   static const fltSemantics semIEEEquad = {16383, -16382, 113, 128};
+   static const fltSemantics semX87DoubleExtended = {16383, -16382, 64, 80};
++  static const fltSemantics semCustomFP = {0, 0, 0, 0};
+   static const fltSemantics semBogus = {0, 0, 0, 0};
+ 
+   /* The IBM double-double semantics. Such a number consists of a pair of IEEE
+@@ -185,6 +186,9 @@
+   const fltSemantics &APFloatBase::PPCDoubleDouble() {
+     return semPPCDoubleDouble;
+   }
++  const fltSemantics &APFloatBase::CustomFP() { 
++    return semCustomFP;
++  }
+ 
+   constexpr RoundingMode APFloatBase::rmNearestTiesToEven;
+   constexpr RoundingMode APFloatBase::rmTowardPositive;
+@@ -4911,3 +4915,4 @@
+ } // namespace llvm
+ 
+ #undef APFLOAT_DISPATCH_ON_SEMANTICS
++

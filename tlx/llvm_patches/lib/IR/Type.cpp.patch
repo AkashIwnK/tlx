@@ -1,0 +1,25 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/Type.cpp	2021-11-19 17:32:39.954176849 -0600
++++ ./lib/IR/Type.cpp	2021-11-19 17:27:49.727862917 -0600
+@@ -46,6 +46,7 @@
+   case X86_FP80TyID  : return getX86_FP80Ty(C);
+   case FP128TyID     : return getFP128Ty(C);
+   case PPC_FP128TyID : return getPPC_FP128Ty(C);
++  case CustomFPTyID  : return getCustomFPTy(C);
+   case LabelTyID     : return getLabelTy(C);
+   case MetadataTyID  : return getMetadataTy(C);
+   case X86_MMXTyID   : return getX86_MMXTy(C);
+@@ -165,7 +166,8 @@
+   if (getTypeID() == DoubleTyID) return 53;
+   if (getTypeID() == X86_FP80TyID) return 64;
+   if (getTypeID() == FP128TyID) return 113;
+-  assert(getTypeID() == PPC_FP128TyID && "unknown fp type");
++  assert((getTypeID() == PPC_FP128TyID || getTypeID() == CustomFPTyID)
++        && "unknown fp type");
+   return -1;
+ }
+ 
+@@ -748,3 +750,4 @@
+ bool PointerType::isLoadableOrStorableType(Type *ElemTy) {
+   return isValidElementType(ElemTy) && !ElemTy->isFunctionTy();
+ }
++

@@ -1,0 +1,25 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/Function.cpp	2021-11-19 17:32:39.865169393 -0600
++++ ./lib/IR/Function.cpp	2021-11-19 17:27:38.471919903 -0600
+@@ -820,6 +820,7 @@
+     case Type::PPC_FP128TyID: Result += "ppcf128";  break;
+     case Type::X86_MMXTyID:   Result += "x86mmx";   break;
+     case Type::X86_AMXTyID:   Result += "x86amx";   break;
++    case Type::TokenTyID:     Result += "";         break;
+     case Type::IntegerTyID:
+       Result += "i" + utostr(cast<IntegerType>(Ty)->getBitWidth());
+       break;
+@@ -853,8 +854,12 @@
+          "Intrinsic overloading on pointer types need to provide a Module");
+   bool HasUnnamedType = false;
+   std::string Result(Intrinsic::getBaseName(Id));
+-  for (Type *Ty : Tys)
+-    Result += "." + getMangledTypeStr(Ty, HasUnnamedType);
++  for (Type *Ty : Tys) {
++    //Result += "." + getMangledTypeStr(Ty, HasUnnamedType);
++    auto MangledStr = getMangledTypeStr(Ty, HasUnnamedType);
++    if (MangledStr != "")
++    	Result += "." + MangledStr;
++  }
+   if (HasUnnamedType) {
+     assert(M && "unnamed types need a module");
+     if (!FT)

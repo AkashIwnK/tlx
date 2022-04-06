@@ -1,0 +1,39 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Type.h	2021-11-19 17:32:36.205862856 -0600
++++ ./include/llvm/IR/Type.h	2021-11-19 17:27:49.726862833 -0600
+@@ -60,6 +60,7 @@
+     X86_FP80TyID,  ///< 80-bit floating point type (X87)
+     FP128TyID,     ///< 128-bit floating point type (112-bit significand)
+     PPC_FP128TyID, ///< 128-bit floating point type (two 64-bits, PowerPC)
++    CustomFPTyID,  ///< Custom floating point type
+     VoidTyID,      ///< type with no size
+     LabelTyID,     ///< Labels
+     MetadataTyID,  ///< Metadata
+@@ -158,12 +159,14 @@
+   /// Return true if this is powerpc long double.
+   bool isPPC_FP128Ty() const { return getTypeID() == PPC_FP128TyID; }
+ 
++  bool isCustomFPTy() const { return getTypeID() == CustomFPTyID; }
++
+   /// Return true if this is one of the six floating-point types
+   bool isFloatingPointTy() const {
+     return getTypeID() == HalfTyID || getTypeID() == BFloatTyID ||
+            getTypeID() == FloatTyID || getTypeID() == DoubleTyID ||
+            getTypeID() == X86_FP80TyID || getTypeID() == FP128TyID ||
+-           getTypeID() == PPC_FP128TyID;
++           getTypeID() == PPC_FP128TyID || getTypeID() == CustomFPTyID;
+   }
+ 
+   const fltSemantics &getFltSemantics() const {
+@@ -175,6 +178,7 @@
+     case X86_FP80TyID: return APFloat::x87DoubleExtended();
+     case FP128TyID: return APFloat::IEEEquad();
+     case PPC_FP128TyID: return APFloat::PPCDoubleDouble();
++    case CustomFPTyID: return APFloat::CustomFP();
+     default: llvm_unreachable("Invalid floating type");
+     }
+   }
+@@ -525,3 +529,4 @@
+ } // end namespace llvm
+ 
+ #endif // LLVM_IR_TYPE_H
++

@@ -1,0 +1,13 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/InitializePasses.h	2021-11-19 17:32:36.233865202 -0600
++++ ./include/llvm/InitializePasses.h	2021-11-19 17:27:38.445917725 -0600
+@@ -60,6 +60,10 @@
+ /// Initialize all passes linked into the CodeGen library.
+ void initializeTarget(PassRegistry&);
+ 
++
++void initializeTensorInfoWrapperPassPass(PassRegistry&);
++void initializeLowerTensorIntrinsicsLegacyPassPass(PassRegistry&);
++
+ void initializeAAEvalLegacyPassPass(PassRegistry&);
+ void initializeAAResultsWrapperPassPass(PassRegistry&);
+ void initializeADCELegacyPassPass(PassRegistry&);

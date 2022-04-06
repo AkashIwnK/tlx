@@ -1,0 +1,10 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/LinkAllPasses.h	2021-11-19 17:32:36.271868385 -0600
++++ ./include/llvm/LinkAllPasses.h	2021-11-19 17:27:38.449918060 -0600
+@@ -233,6 +233,7 @@
+       (void) llvm::createUnifyLoopExitsPass();
+       (void) llvm::createFixIrreduciblePass();
+       (void)llvm::createFunctionSpecializationPass();
++      (void) llvm::createLowerTensorIntrinsicsPass();
+ 
+       (void)new llvm::IntervalPartition();
+       (void)new llvm::ScalarEvolutionWrapperPass();

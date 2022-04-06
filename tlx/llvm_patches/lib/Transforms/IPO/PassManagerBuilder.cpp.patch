@@ -1,0 +1,10 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Transforms/IPO/PassManagerBuilder.cpp	2021-11-19 17:32:46.212701120 -0600
++++ ./lib/Transforms/IPO/PassManagerBuilder.cpp	2021-11-19 17:27:38.483920909 -0600
+@@ -910,6 +910,7 @@
+     // analysis to establish no-aliasing between loads and stores of different
+     // columns of the same matrix.
+     MPM.add(createEarlyCSEPass(false));
++    MPM.add(createLowerTensorIntrinsicsPass());
+   }
+ 
+   addExtensionsToPM(EP_VectorizerStart, MPM);
