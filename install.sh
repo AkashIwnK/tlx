@@ -84,6 +84,9 @@ if [ ! -d $TENSOR_DIR ]; then
     ln -s $CURRENT_DIR/tlx/include/llvm/Analysis/TensorProperties.h $LLVM_SRC/include/llvm/Analysis/TensorProperties.h
     ln -s $CURRENT_DIR/tlx/include/llvm/IR/TensorType.h $LLVM_SRC/include/llvm/IR/TensorType.h
     ln -s $CURRENT_DIR/tlx/include/llvm/Transforms/Scalar/LowerTensorIntrinsics.h $LLVM_SRC/include/llvm/Transforms/Scalar/LowerTensorIntrinsics.h
+    ln -s $CURRENT_DIR/tlx/lib/TLXTargets $LLVM_SRC/lib/
+    ln -s $CURRENT_DIR/tlx/include/llvm/Transforms/Utils/TensorUtils.h $LLVM_SRC/include/llvm/Transforms/Utils/TensorUtils.h
+    ln -s $CURRENT_DIR/tlx/include/llvm/Transforms/Utils/TilingSupport.h $LLVM_SRC/include/llvm/Transforms/Utils/TilingSupport.h
     echo "#############################################################################"
 else
     echo "#############################################################################"

@@ -1846,7 +1846,7 @@ public:
           }
         }
       }
-      return
+      return;
     }
   }
 
@@ -3439,4 +3439,5 @@ INITIALIZE_PASS_END(
 FunctionPass *llvm::createLowerTensorIntrinsicsPass() {
   return new LowerTensorIntrinsicsLegacyPass();
 }
+
 

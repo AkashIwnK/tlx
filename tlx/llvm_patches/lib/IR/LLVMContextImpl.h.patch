@@ -1,0 +1,37 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/LLVMContextImpl.h	2022-04-13 11:35:57.852036725 -0500
++++ ./lib/IR/LLVMContextImpl.h	2022-04-13 09:57:35.796726358 -0500
+@@ -391,9 +391,8 @@
+         IsUnsigned(N->isUnsigned()) {}
+ 
+   bool isKeyOf(const DIEnumerator *RHS) const {
+-    return Value.getBitWidth() == RHS->getValue().getBitWidth() &&
+-           Value == RHS->getValue() && IsUnsigned == RHS->isUnsigned() &&
+-           Name == RHS->getRawName();
++    return APInt::isSameValue(Value, RHS->getValue()) &&
++           IsUnsigned == RHS->isUnsigned() && Name == RHS->getRawName();
+   }
+ 
+   unsigned getHashValue() const { return hash_combine(Value, Name); }
+@@ -1427,9 +1426,10 @@
+   std::unique_ptr<ConstantTokenNone> TheNoneToken;
+ 
+   // Basic type instances.
+-  Type VoidTy, LabelTy, HalfTy, BFloatTy, FloatTy, DoubleTy, MetadataTy,
+-      TokenTy;
+-  Type X86_FP80Ty, FP128Ty, PPC_FP128Ty, X86_MMXTy, X86_AMXTy;
++  Type VoidTy, LabelTy, MetadataTy, TokenTy;
++  CustomFPType HalfTy, BFloatTy, FloatTy, DoubleTy, X86_FP80Ty, 
++               FP128Ty, PPC_FP128Ty, CustomFPTy;
++  Type X86_MMXTy, X86_AMXTy;
+   IntegerType Int1Ty, Int8Ty, Int16Ty, Int32Ty, Int64Ty, Int128Ty;
+ 
+   BumpPtrAllocator Alloc;
+@@ -1437,6 +1437,8 @@
+ 
+   DenseMap<unsigned, IntegerType*> IntegerTypes;
+ 
++  DenseMap<unsigned, CustomFPType*> CustomFPTypes;
++
+   using FunctionTypeSet = DenseSet<FunctionType *, FunctionTypeKeyInfo>;
+   FunctionTypeSet FunctionTypes;
+   using StructTypeSet = DenseSet<StructType *, AnonStructTypeKeyInfo>;

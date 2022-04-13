@@ -1,5 +1,5 @@
---- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/Type.cpp	2021-11-19 17:32:39.954176849 -0600
-+++ ./lib/IR/Type.cpp	2021-11-19 17:27:49.727862917 -0600
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/Type.cpp	2022-04-13 11:35:57.934043565 -0500
++++ ./lib/IR/Type.cpp	2022-04-13 09:57:35.799726610 -0500
 @@ -46,6 +46,7 @@
    case X86_FP80TyID  : return getX86_FP80Ty(C);
    case FP128TyID     : return getFP128Ty(C);
@@ -8,18 +8,89 @@
    case LabelTyID     : return getLabelTy(C);
    case MetadataTyID  : return getMetadataTy(C);
    case X86_MMXTyID   : return getX86_MMXTy(C);
-@@ -165,7 +166,8 @@
+@@ -134,6 +135,11 @@
+   case Type::X86_FP80TyID: return TypeSize::Fixed(80);
+   case Type::FP128TyID: return TypeSize::Fixed(128);
+   case Type::PPC_FP128TyID: return TypeSize::Fixed(128);
++  case Type::CustomFPTyID: {
++    const CustomFPType *FPTy = cast<CustomFPType>(this);
++    return TypeSize::Fixed(FPTy->getMantissaBitWidth() 
++                          + FPTy->getExponentBitWidth());
++  }
+   case Type::X86_MMXTyID: return TypeSize::Fixed(64);
+   case Type::X86_AMXTyID: return TypeSize::Fixed(8192);
+   case Type::IntegerTyID:
+@@ -165,6 +171,9 @@
    if (getTypeID() == DoubleTyID) return 53;
    if (getTypeID() == X86_FP80TyID) return 64;
    if (getTypeID() == FP128TyID) return 113;
--  assert(getTypeID() == PPC_FP128TyID && "unknown fp type");
-+  assert((getTypeID() == PPC_FP128TyID || getTypeID() == CustomFPTyID)
-+        && "unknown fp type");
++  if (getTypeID() == CustomFPTyID) {
++    return cast<CustomFPType>(this)->getMantissaBitWidth();
++  }
+   assert(getTypeID() == PPC_FP128TyID && "unknown fp type");
    return -1;
  }
+@@ -185,15 +194,21 @@
  
-@@ -748,3 +750,4 @@
- bool PointerType::isLoadableOrStorableType(Type *ElemTy) {
-   return isValidElementType(ElemTy) && !ElemTy->isFunctionTy();
- }
+ Type *Type::getVoidTy(LLVMContext &C) { return &C.pImpl->VoidTy; }
+ Type *Type::getLabelTy(LLVMContext &C) { return &C.pImpl->LabelTy; }
+-Type *Type::getHalfTy(LLVMContext &C) { return &C.pImpl->HalfTy; }
+-Type *Type::getBFloatTy(LLVMContext &C) { return &C.pImpl->BFloatTy; }
+-Type *Type::getFloatTy(LLVMContext &C) { return &C.pImpl->FloatTy; }
+-Type *Type::getDoubleTy(LLVMContext &C) { return &C.pImpl->DoubleTy; }
++CustomFPType *Type::getHalfTy(LLVMContext &C) { return &C.pImpl->HalfTy; }
++CustomFPType *Type::getBFloatTy(LLVMContext &C) { return &C.pImpl->BFloatTy; }
++CustomFPType *Type::getFloatTy(LLVMContext &C) { return &C.pImpl->FloatTy; }
++CustomFPType *Type::getDoubleTy(LLVMContext &C) { return &C.pImpl->DoubleTy; }
+ Type *Type::getMetadataTy(LLVMContext &C) { return &C.pImpl->MetadataTy; }
+ Type *Type::getTokenTy(LLVMContext &C) { return &C.pImpl->TokenTy; }
+-Type *Type::getX86_FP80Ty(LLVMContext &C) { return &C.pImpl->X86_FP80Ty; }
+-Type *Type::getFP128Ty(LLVMContext &C) { return &C.pImpl->FP128Ty; }
+-Type *Type::getPPC_FP128Ty(LLVMContext &C) { return &C.pImpl->PPC_FP128Ty; }
++CustomFPType *Type::getX86_FP80Ty(LLVMContext &C) { return &C.pImpl->X86_FP80Ty; }
++CustomFPType *Type::getFP128Ty(LLVMContext &C) { return &C.pImpl->FP128Ty; }
++CustomFPType *Type::getPPC_FP128Ty(LLVMContext &C) { return &C.pImpl->PPC_FP128Ty; }
++CustomFPType *Type::getCustomFPTy(LLVMContext &C) { return &C.pImpl->CustomFPTy; }
 +
++CustomFPType *Type::getCustomFPTy(LLVMContext &C, unsigned Exponent, unsigned Mantissa) { 
++  return CustomFPType::get(C, Exponent, Mantissa);
++}
++
+ Type *Type::getX86_MMXTy(LLVMContext &C) { return &C.pImpl->X86_MMXTy; }
+ Type *Type::getX86_AMXTy(LLVMContext &C) { return &C.pImpl->X86_AMXTy; }
+ 
+@@ -236,6 +251,10 @@
+   return getPPC_FP128Ty(C)->getPointerTo(AS);
+ }
+ 
++PointerType *Type::getCustomFPPtrTy(LLVMContext &C, unsigned AS) {
++  return getCustomFPTy(C)->getPointerTo(AS);
++}
++
+ PointerType *Type::getX86_MMXPtrTy(LLVMContext &C, unsigned AS) {
+   return getX86_MMXTy(C)->getPointerTo(AS);
+ }
+@@ -301,6 +320,23 @@
+ }
+ 
+ //===----------------------------------------------------------------------===//
++//                       CustomFPType Implementation
++//===----------------------------------------------------------------------===//
++
++CustomFPType *CustomFPType::get(LLVMContext &C, unsigned Exponent, unsigned Mantissa) {
++  assert(Exponent >= MIN_NUM_BITS && "exponent bitwidth too small");
++  assert(Exponent <= MAX_NUM_BITS && "exponent bitwidth too large");
++  assert(Mantissa >= MIN_NUM_BITS && "mantissa bitwidth too small");
++  assert(Mantissa <= MAX_NUM_BITS && "mantissa bitwidth too large");
++
++  CustomFPType *&Entry = C.pImpl->CustomFPTypes[((Exponent << BITWIDTTH) | Mantissa)];
++  if (!Entry)
++    Entry = new (C.pImpl->Alloc) CustomFPType(C, Exponent, Mantissa);
++  return Entry;
++}
++
++
++//===----------------------------------------------------------------------===//
+ //                       FunctionType Implementation
+ //===----------------------------------------------------------------------===//
+ 

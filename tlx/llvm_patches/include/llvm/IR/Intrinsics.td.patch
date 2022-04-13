@@ -1,6 +1,6 @@
---- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Intrinsics.td	2021-11-19 17:32:36.063850960 -0600
-+++ ./include/llvm/IR/Intrinsics.td	2021-11-19 17:27:49.724862666 -0600
-@@ -1763,6 +1763,128 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Intrinsics.td	2022-04-13 11:35:52.997631851 -0500
++++ ./include/llvm/IR/Intrinsics.td	2022-04-13 09:57:35.754722828 -0500
+@@ -1763,6 +1763,133 @@
  
  //===----------------------------------------------------------------------===//
  
@@ -8,7 +8,7 @@
 +
 +
 +def int_tensor_typeinfo : Intrinsic<[llvm_token_ty], [llvm_any_ty, llvm_anyvector_ty,
-+                                           llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty],
++                                           llvm_anyvector_ty, llvm_anyvector_ty],
 +                                          [IntrNoMem, IntrSpeculatable]>;
 +
 +def int_tensor_relu : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty],
@@ -108,9 +108,14 @@
 +
 +//===---------- Intrinsics to represent 2D tensor operations -----------------===//
 +
-+def int_tensor_mma : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
++def int_tensor_smma : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
 +                                                                  [IntrSpeculatable, IntrNoMem]>;
-+
++def int_tensor_umma : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
++                                                                  [IntrSpeculatable, IntrNoMem]>;
++def int_tensor_usmma : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
++                                                                  [IntrSpeculatable, IntrNoMem]>;
++def int_tensor_summa : Intrinsic<[llvm_anyvector_ty], [llvm_token_ty, llvm_token_ty, llvm_token_ty],
++                                                                  [IntrSpeculatable, IntrNoMem]>;
 +
 +//===---------- Intrinsics to represent vector operations -----------------===//
 +

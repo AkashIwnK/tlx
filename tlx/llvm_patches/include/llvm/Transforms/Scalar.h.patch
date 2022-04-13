@@ -1,5 +1,5 @@
---- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/Transforms/Scalar.h	2021-11-19 17:32:37.378961126 -0600
-+++ ./include/llvm/Transforms/Scalar.h	2021-11-19 17:27:38.454918479 -0600
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/Transforms/Scalar.h	2022-04-13 11:35:54.583764140 -0500
++++ ./include/llvm/Transforms/Scalar.h	2022-04-13 09:57:35.772724341 -0500
 @@ -562,6 +562,13 @@
  // and scatter intrinsics with scalar code when target doesn't support them.
  //

@@ -1,5 +1,5 @@
---- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Transforms/Scalar/Scalar.cpp	2021-11-19 17:32:46.633736390 -0600
-+++ ./lib/Transforms/Scalar/Scalar.cpp	2021-11-19 17:27:38.493921747 -0600
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/Transforms/Scalar/Scalar.cpp	2022-04-13 11:36:06.557762819 -0500
++++ ./lib/Transforms/Scalar/Scalar.cpp	2022-04-13 09:57:35.827728964 -0500
 @@ -116,6 +116,7 @@
    initializeLoopVersioningLegacyPassPass(Registry);
    initializeEntryExitInstrumenterPass(Registry);

@@ -1,6 +1,14 @@
---- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Type.h	2021-11-19 17:32:36.205862856 -0600
-+++ ./include/llvm/IR/Type.h	2021-11-19 17:27:49.726862833 -0600
-@@ -60,6 +60,7 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./include/llvm/IR/Type.h	2022-04-13 11:35:53.154644946 -0500
++++ ./include/llvm/IR/Type.h	2022-04-13 09:57:35.759723248 -0500
+@@ -29,6 +29,7 @@
+ namespace llvm {
+ 
+ class IntegerType;
++class CustomFPType;
+ class LLVMContext;
+ class PointerType;
+ class raw_ostream;
+@@ -60,6 +61,7 @@
      X86_FP80TyID,  ///< 80-bit floating point type (X87)
      FP128TyID,     ///< 128-bit floating point type (112-bit significand)
      PPC_FP128TyID, ///< 128-bit floating point type (two 64-bits, PowerPC)
@@ -8,10 +16,52 @@
      VoidTyID,      ///< type with no size
      LabelTyID,     ///< Labels
      MetadataTyID,  ///< Metadata
-@@ -158,12 +159,14 @@
+@@ -90,7 +92,39 @@
+   friend class LLVMContextImpl;
+ 
+   explicit Type(LLVMContext &C, TypeID tid)
+-    : Context(C), ID(tid), SubclassData(0) {}
++    : Context(C), ID(tid) {//, SubclassData(0) {
++    // SubclassData depends on TypeID
++    unsigned Exponent;
++    unsigned Mantissa;
++    switch (getTypeID()) {
++      case HalfTyID: 
++        Exponent = 5;
++        Mantissa = 11;
++      case BFloatTyID:
++        Exponent = 8;
++        Mantissa = 8;
++      case FloatTyID:
++        Exponent = 8;
++        Mantissa = 24;
++      case DoubleTyID: 
++        Exponent = 11;
++        Mantissa = 53;
++      case X86_FP80TyID: 
++        Exponent = 16;
++        Mantissa = 64;
++      case FP128TyID: 
++        Exponent = 15;
++        Mantissa = 113;
++      case PPC_FP128TyID: 
++        Exponent = 15;
++        Mantissa = 113;
++      default: 
++        Exponent = 0;
++        Mantissa = 0;
++    }
++    setSubclassData((Exponent << 12) | Mantissa);
++  }
++
+   ~Type() = default;
+ 
+   unsigned getSubclassData() const { return SubclassData; }
+@@ -158,12 +192,15 @@
    /// Return true if this is powerpc long double.
    bool isPPC_FP128Ty() const { return getTypeID() == PPC_FP128TyID; }
  
++  /// Retunr true if this is a custom floating point.
 +  bool isCustomFPTy() const { return getTypeID() == CustomFPTyID; }
 +
    /// Return true if this is one of the six floating-point types
@@ -24,7 +74,7 @@
    }
  
    const fltSemantics &getFltSemantics() const {
-@@ -175,6 +178,7 @@
+@@ -175,6 +212,7 @@
      case X86_FP80TyID: return APFloat::x87DoubleExtended();
      case FP128TyID: return APFloat::IEEEquad();
      case PPC_FP128TyID: return APFloat::PPCDoubleDouble();
@@ -32,8 +82,60 @@
      default: llvm_unreachable("Invalid floating type");
      }
    }
-@@ -525,3 +529,4 @@
- } // end namespace llvm
- 
- #endif // LLVM_IR_TYPE_H
-+
+@@ -411,14 +449,16 @@
+   //
+   static Type *getVoidTy(LLVMContext &C);
+   static Type *getLabelTy(LLVMContext &C);
+-  static Type *getHalfTy(LLVMContext &C);
+-  static Type *getBFloatTy(LLVMContext &C);
+-  static Type *getFloatTy(LLVMContext &C);
+-  static Type *getDoubleTy(LLVMContext &C);
++  static CustomFPType *getHalfTy(LLVMContext &C);
++  static CustomFPType *getBFloatTy(LLVMContext &C);
++  static CustomFPType *getFloatTy(LLVMContext &C);
++  static CustomFPType *getDoubleTy(LLVMContext &C);
+   static Type *getMetadataTy(LLVMContext &C);
+-  static Type *getX86_FP80Ty(LLVMContext &C);
+-  static Type *getFP128Ty(LLVMContext &C);
+-  static Type *getPPC_FP128Ty(LLVMContext &C);
++  static CustomFPType *getX86_FP80Ty(LLVMContext &C);
++  static CustomFPType *getFP128Ty(LLVMContext &C);
++  static CustomFPType *getPPC_FP128Ty(LLVMContext &C);
++  static CustomFPType *getCustomFPTy(LLVMContext &C);
++  static CustomFPType *getCustomFPTy(LLVMContext &C, unsigned Exponent, unsigned Mantissa);
+   static Type *getX86_MMXTy(LLVMContext &C);
+   static Type *getX86_AMXTy(LLVMContext &C);
+   static Type *getTokenTy(LLVMContext &C);
+@@ -443,8 +483,8 @@
+     }
+     llvm_unreachable("Unsupported type in Type::getScalarTy");
+   }
+-  static Type *getFloatingPointTy(LLVMContext &C, const fltSemantics &S) {
+-    Type *Ty;
++  static CustomFPType *getFloatingPointTy(LLVMContext &C, const fltSemantics &S) {
++    CustomFPType *Ty;
+     if (&S == &APFloat::IEEEhalf())
+       Ty = Type::getHalfTy(C);
+     else if (&S == &APFloat::BFloat())
+@@ -457,9 +497,11 @@
+       Ty = Type::getX86_FP80Ty(C);
+     else if (&S == &APFloat::IEEEquad())
+       Ty = Type::getFP128Ty(C);
+-    else {
+-      assert(&S == &APFloat::PPCDoubleDouble() && "Unknown FP format");
++    else if (&S == &APFloat::PPCDoubleDouble())
+       Ty = Type::getPPC_FP128Ty(C);
++    else {
++      assert(&S == &APFloat::CustomFP() && "Unknown FP format");
++      Ty = Type::getCustomFPTy(C);
+     }
+     return Ty;
+   }
+@@ -475,6 +517,7 @@
+   static PointerType *getX86_FP80PtrTy(LLVMContext &C, unsigned AS = 0);
+   static PointerType *getFP128PtrTy(LLVMContext &C, unsigned AS = 0);
+   static PointerType *getPPC_FP128PtrTy(LLVMContext &C, unsigned AS = 0);
++  static PointerType *getCustomFPPtrTy(LLVMContext &C, unsigned AS = 0);
+   static PointerType *getX86_MMXPtrTy(LLVMContext &C, unsigned AS = 0);
+   static PointerType *getX86_AMXPtrTy(LLVMContext &C, unsigned AS = 0);
+   static PointerType *getIntNPtrTy(LLVMContext &C, unsigned N, unsigned AS = 0);

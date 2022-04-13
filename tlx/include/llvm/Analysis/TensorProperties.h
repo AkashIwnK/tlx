@@ -28,6 +28,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallSet.h"
 
 #include <set>
 #include <utility>
@@ -362,3 +363,4 @@ public:
 } // namespace llvm
 
 #endif // LLVM_TRANSFORMS_SCALAR_TENSORINFO_H
+

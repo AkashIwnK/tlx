@@ -1,0 +1,29 @@
+--- /home/akashk4/tensor/tlx/llvm-project/llvm/./lib/IR/LLVMContextImpl.cpp	2022-04-13 11:35:57.848036392 -0500
++++ ./lib/IR/LLVMContextImpl.cpp	2022-04-13 09:57:35.793726106 -0500
+@@ -34,7 +34,8 @@
+       FloatTy(C, Type::FloatTyID), DoubleTy(C, Type::DoubleTyID),
+       MetadataTy(C, Type::MetadataTyID), TokenTy(C, Type::TokenTyID),
+       X86_FP80Ty(C, Type::X86_FP80TyID), FP128Ty(C, Type::FP128TyID),
+-      PPC_FP128Ty(C, Type::PPC_FP128TyID), X86_MMXTy(C, Type::X86_MMXTyID),
++      PPC_FP128Ty(C, Type::PPC_FP128TyID), CustomFPTy(C, Type::CustomFPTyID),
++      X86_MMXTy(C, Type::X86_MMXTyID),
+       X86_AMXTy(C, Type::X86_AMXTyID), Int1Ty(C, 1), Int8Ty(C, 8),
+       Int16Ty(C, 16), Int32Ty(C, 32), Int64Ty(C, 64), Int128Ty(C, 128),
+       ForceOpaquePointers(ForceOpaquePointersCL) {}
+@@ -55,15 +56,8 @@
+ 
+   // Drop references for MDNodes.  Do this before Values get deleted to avoid
+   // unnecessary RAUW when nodes are still unresolved.
+-  for (auto *I : DistinctMDNodes) {
+-    // We may have DIArgList that were uniqued, and as it has a custom
+-    // implementation of dropAllReferences, it needs to be explicitly invoked.
+-    if (auto *AL = dyn_cast<DIArgList>(I)) {
+-      AL->dropAllReferences();
+-      continue;
+-    }
++  for (auto *I : DistinctMDNodes)
+     I->dropAllReferences();
+-  }
+ #define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
+   for (auto *I : CLASS##s)                                                     \
+     I->dropAllReferences();
