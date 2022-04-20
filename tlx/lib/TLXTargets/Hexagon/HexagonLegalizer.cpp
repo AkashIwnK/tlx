@@ -29,6 +29,7 @@
 
 #include "llvm/Analysis/TensorProperties.h"
 #include "llvm/IR/TensorType.h"
+#include "Legalizer.h"
 
 
 namespace llvm {
@@ -62,78 +63,93 @@ public:
   virtual bool legalize(Instruction *I) {
     IRBuilder<> Builder(I);
     auto &Ctx = I->getParent()->getContext();
-    Value *Acc, *Vector1, *Vector2, *Vector, *LaneOffset, *SizeExtension, *Val;
+    Value *Acc, *Vector1, *Vector2, *Vector, *LaneOffset, *LaneSize, *Val;
 
     if (match(I, m_Intrinsic<Intrinsic::vector_reduce_mac_acc>(
-                  m_Value(Acc), m_Value(Vector1), m_Value(Vector2), m_Value(LaneOffset), m_Value(SizeExtension)))) {
-      auto RTileShapeVect = TI.getShapeVectorFor(RTensor);
-      auto TokenShapeVect = TI.getShapeVectorFor(Token);
-      auto *Acc = InstToInstMap[Token];
-      auto *RTile = InstToInstMap[RTensor];
-      auto *LTile = InstToInstMap[LTensor];
-      if (!RTile || !LTile) {
-        ToBeLegalized.push_back(I);
-        return false;
-      }
-      std::vector<Value *> Args = {ConstantInt::get(Type::getInt16Ty(Ctx), TokenShapeVect[0]),
-                                  ConstantInt::get(Type::getInt16Ty(Ctx), TokenShapeVect[1]),
-                                  ConstantInt::get(Type::getInt16Ty(Ctx), RTileShapeVect[1])};
+                  m_Value(Acc), m_Value(Vector1), m_Value(Vector2), m_Value(LaneSize)))) {
+      auto *Acc = InstToInstMap[Acc];
+      auto *Vect1 = InstToInstMap[Vector1];
+      auto *Vect2 = InstToInstMap[Vector2];
+      std::vector<Value *> Args;
       Args.push_back(Acc);
-      Args.push_back(RTile);
-      Args.push_back(LTile);
-      auto *MMA = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_vrmpyub_rtt_acc_128B, 
+      Args.push_back(Vector1);
+      Args.push_back(Vector2);
+      Args.push_back(LaneSize);
+      IntrinsicInst *Mac = nullptr;
+      if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 8) {
+        Mac = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_vrmpybus_acc_128B, 
                                             None, ArrayRef<Value *>(Args), nullptr, "hvx.reduce.mac");
+      } else {
+        assert(false && "Invalid element type");
+      }
       ToBeRemoved.insert(I);
-      InstToInstMap[I] = MMA;
+      InstToInstMap[I] = Mac;
       return true;
     }
 
-  
     if (match(I, m_Intrinsic<Intrinsic::vector_interleave>(
-                  m_Value(Acc), m_Value(Vector1), m_Value(Vector2), m_Value(LaneOffset), m_Value(SizeExtension)))) {
-      auto RTileShapeVect = TI.getShapeVectorFor(RTensor);
-      auto TokenShapeVect = TI.getShapeVectorFor(Token);
-      auto *Acc = InstToInstMap[Token];
+                 m_Value(Vector1), m_Value(Vector2), m_Value(LaneSize), m_Value(LaneOffset)))) {
+      auto *Acc = InstToInstMap[Vector1];
       auto *RTile = InstToInstMap[RTensor];
-      auto *LTile = InstToInstMap[LTensor];
-      if (!RTile || !LTile) {
-        ToBeLegalized.push_back(I);
-        return false;
+      auto *LTile = InstToInstMap[Vector2];
+      std::vector<Value *> Args;
+      Args.push_back(Vector1);
+      Args.push_back(Vector2);
+      IntrinsicInst *Shuffle = nullptr;
+      auto *C = dyn_cast<ConstantInt>(LaneOffset);
+      assert(C != nullptr);
+      if (C->isZero()) {
+        if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 8) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_vshuffb_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.low.shuffle");
+        } else if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 16) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_vshuffh_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.low.shuffle");
+        } else (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 32) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_shuffeqw_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.low.shuffle");
+        } else {
+          assert(false && "Invalid element type");
+        }
+      } else {
+        if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 8) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_vshuffeb_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.high.shuffle");
+        } else if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 16) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_shuffeqh_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.high.shuffle");
+        } else (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 32) {
+          Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_shuffeqw_128B, 
+                                                None, ArrayRef<Value *>(Args), nullptr, "hvx.high.shuffle");
+        } else {
+          assert(false && "Invalid element type");
+        }
       }
-      std::vector<Value *> Args = {ConstantInt::get(Type::getInt16Ty(Ctx), TokenShapeVect[0]),
-                                  ConstantInt::get(Type::getInt16Ty(Ctx), TokenShapeVect[1]),
-                                  ConstantInt::get(Type::getInt16Ty(Ctx), RTileShapeVect[1])};
-      Args.push_back(Acc);
-      Args.push_back(RTile);
-      Args.push_back(LTile);
-      if (auto *C = dyn_cast<ConstantInt>(LaneOffset) ==  0) {
-        auto *Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_shuffeqh_128B, 
-                                              None, ArrayRef<Value *>(Args), nullptr, "hvx.low.shuffle");
-        ToBeRemoved.insert(I);
-        InstToInstMap[I] = Shuffle;
-      } else if (auto *C = dyn_cast<ConstantInt>(LaneOffset) ==  64) {
-        auto *Shuffle = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_shuffeqh_128B, 
-                                              None, ArrayRef<Value *>(Args), nullptr, "hvx.high.shuffle");
-        ToBeRemoved.insert(I);
-        InstToInstMap[I] = Shuffle;
-      }
+      ToBeRemoved.insert(I);
+      InstToInstMap[I] = Shuffle;
       return true;
     }
 
     if (match(I, m_Intrinsic<Intrinsic::vector_splat>(
                   m_Value(Vector), m_Value(Val)))) {
       if (auto *C = dyn_cast<ConstantInt>(Val)) {
-        if (C->isZero()) {
-          // Insert an AMX zero tile intrinsic
-          auto ShapeVect = TI.getShapeVectorFor(Token);
-          std::vector<Value *> Args = {ConstantInt::get(Type::getInt16Ty(Ctx), ShapeVect[0]), 
-                                      ConstantInt::get(Type::getInt16Ty(Ctx), ShapeVect[1])};
-          auto *ZeroTile = Builder.CreateIntrinsic(Intrinsic::Hexagon_tilezero_internal, 
-                                                None, ArrayRef<Value *>(Args));
-          ToBeRemoved.insert(I);
-          InstToInstMap[I] = ZeroTile;
-          return true;
+        std::vector<Value *> Args = {Vector, Val};
+        IntrinsicInst *VectorSplat = nullptr;
+        if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 8) {
+          VectorSplat = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_lvsplatb_128B, 
+                                                    None, ArrayRef<Value *>(Args));
+        } else if (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 16) {
+          VectorSplat = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_lvsplath_128B, 
+                                              None, ArrayRef<Value *>(Args));
+        } else (dyn_cast<FixedVectorType)(I->getType())->getNumElements() == 32) {
+          VectorSplat = Builder.CreateIntrinsic(Intrinsic::hexagon_V6_lvsplatw_128B, 
+                                      None, ArrayRef<Value *>(Args));
+        } else {
+          assert(false && "Invalid element type");
         }
+        ToBeRemoved.insert(I);
+        InstToInstMap[I] = VectorSplat;
+        return true;
       }
       return false;
     }
@@ -179,8 +195,7 @@ INITIALIZE_PASS_BEGIN(
     HexagonLegalizationPass, "legalize-hexagon",
     "Pass to legalize vector intrinsics to target Hexagon", false, false)
 INITIALIZE_PASS_DEPENDENCY(TensorInfoWrapperPass)
-INITIALIZE_PASS_END(
-    HexagonLegalizationPass, "legalize-Hexagon",
+INITIALIZE_PASS_END(HexagonLegalizationPass, "legalize-Hexagon",
     "Pass to legalize vector intrinsics to target Hexagon", false, false)
 
 FunctionPass *llvm::createHexagonLegalizationPass() {
